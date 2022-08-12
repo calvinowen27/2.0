@@ -7,7 +7,11 @@
             "type": "process",
             "args": [
                 "build",
+<<<<<<< HEAD
                 "${workspaceFolder}/ImageCompressor/ImageCompressor.csproj",
+=======
+                "${workspaceFolder}/Image-Compressor.csproj",
+>>>>>>> 97dc60c4b64105fd7dd7aba637bf69ecc91b81ee
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +23,11 @@
             "type": "process",
             "args": [
                 "publish",
+<<<<<<< HEAD
                 "${workspaceFolder}/ImageCompressor/ImageCompressor.csproj",
+=======
+                "${workspaceFolder}/Image-Compressor.csproj",
+>>>>>>> 97dc60c4b64105fd7dd7aba637bf69ecc91b81ee
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -33,7 +41,11 @@
                 "watch",
                 "run",
                 "--project",
+<<<<<<< HEAD
                 "${workspaceFolder}/ImageCompressor/ImageCompressor.csproj"
+=======
+                "${workspaceFolder}/Image-Compressor.csproj"
+>>>>>>> 97dc60c4b64105fd7dd7aba637bf69ecc91b81ee
             ],
             "problemMatcher": "$msCompile"
         }
