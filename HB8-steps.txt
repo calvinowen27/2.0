@@ -1,0 +1,12 @@
+1. Block pixels (per channel)
+    a. look at pixels in 4x4 chunks
+    b. pick reference values (min/max)
+    c. assign indexes (between 0-3) to all 16 pixels based on closest reference value (including lin-interpolated values)
+        i. do linear interpolation between reference values to get middle 2 reference values
+    d. make sure values are stored separated by channel and block
+        i. stored values should consist of outside 2 reference values and 16 indexes
+
+2. Convert block indexes to huffman code
+    a. Write huffman coding function(s)
+    b. Store huffman-coded blocks separately from original blocks
+        i. reference values should be unchanged
