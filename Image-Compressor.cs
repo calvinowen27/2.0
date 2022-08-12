@@ -8,7 +8,6 @@ namespace main
         public static void Main(string[] args)
         {
             Console.WriteLine("ok");
-            Bitmap testImage = new Bitmap(testImage.jpg);
         }
     }
 }
