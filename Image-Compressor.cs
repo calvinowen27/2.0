@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 class ImageCompressor {
         static void Main(string[] args) {
-            var path = @"../test.png";
+            var path = @"../Image-Compressor/test.png";
             var img = Image.Load<Rgba32>(path);
             
             var height = img.Height;
