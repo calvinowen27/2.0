@@ -13,6 +13,8 @@ class ImageCompressor {
             for(int y = 0; y < height; y++) {
                 for(int x = 0; x < width; x++) {
                     var px = img[x, y];
+                    
+                    //var px = img[x, y];
                     var rgb = new int[] { px.R, px.G, px.B };
                     Console.WriteLine(rgb[0]);
                 }
