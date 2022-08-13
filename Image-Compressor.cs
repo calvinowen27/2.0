@@ -1,6 +1,7 @@
 ﻿using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Huffman;
 
 class ImageCompressor
 {
@@ -95,5 +96,17 @@ class ImageCompressor
         //----------------------------------------------------------------------------------------------------------------------
 
         
+    }
+
+    public static void HuffmanTest() {
+        // This function just used for huffman testing/example
+
+        Random rand = new Random();
+        var data = new int[16];
+        for(int i = 0; i < 16; i++) {
+            data[i] = rand.Next(0, 4);
+        }
+
+        var a = new HuffmanTree(data);
     }
 }
