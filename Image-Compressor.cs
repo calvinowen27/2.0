@@ -1,6 +1,7 @@
 ﻿using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Huffman;
 
 class ImageCompressor
 {
@@ -10,7 +11,18 @@ class ImageCompressor
     {
         // Image processing
         using Image<Rgba32> img = Image.Load<Rgba32>(imagePath);
+        List<List<List<int[]>>> blockedPixels = blockPixels(img);
 
+
+        Console.WriteLine(blockedPixels.Count);
+        for(int y = 0; y < blockedPixels.Count; y ++)
+        {
+            for(int x = 0; x < blockedPixels[y].Count; x ++)
+            {
+                Console.WriteLine($"Block [{y}, {x}]: " + String.Join(" ", blockedPixels[y][x]));
+            }
+        }
+        /*
         //2d List of int[]s that store the RGBA of each pixel as an int[]
         List<List<int[]>> pixelValues = new List<List<int[]>>();
 
@@ -57,22 +69,80 @@ class ImageCompressor
         }
         //-------------------------------------------------------------------------------------------------------
 
-        //this block just to print and check its doing work right ---------------------------------------------------------------
-        Console.WriteLine("[12, 45]: " + 
-        pixelValues[12][45][0] + " " + pixelValues[12][45][1] + " " + pixelValues[12][45][2] + " " + pixelValues[12][45][3]);
-        Console.WriteLine("[45, 12]: " + 
-        pixelValues[45][12][0] + " " + pixelValues[45][12][1] + " " + pixelValues[45][12][2] + " " + pixelValues[45][12][3]);
+        //this block just to print and check pixelValues is being created properly ----------------------------------------------
+        Console.WriteLine("[12, 45]: " + String.Join(" ", pixelValues[12][45]));
+        Console.WriteLine("[45, 12]: " + String.Join(" ", pixelValues[45][12]));
         for(int y = 0; y < pixelValues.Count; y ++) 
         {
             for(int x = 0; x < pixelValues[y].Count; x ++) 
             {
-                Console.WriteLine("[" + y + ", " + x + "]: " + 
-                pixelValues[y][x][0] + " " + pixelValues[y][x][1] + " " + pixelValues[y][x][2] + " " + pixelValues[y][x][3]);
+                Console.WriteLine("[" + y + ", " + x + "]: " + String.Join(" ", pixelValues[y][x]));
             }
         }
         //-----------------------------------------------------------------------------------------------------------------------
+        */
+
+        /*int[] data = new int[500];
+        Random rand = new Random();
+        for(int i = 0; i < data.Length; i++) {
+            data[i] = rand.Next(0, 26);
+        }*/
+
+        //var huff = new HuffmanTree(new int[] {0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 3, 3, 3, 3, 3});
     }
 
+    
+    //need to implement either 1: another for and another dimension in blockedPixels loop to do channels in this method
+    //or 2: have separate blockPixels 3d Lists in main for each channel
+    static List<List<int[]>> blockPixels(Image<Rgba32> img, int channel)
+    {
+        List<List<int[]>> blockedPixels = new List<List<int[]>>();
+
+        Console.WriteLine($"{img.Width}, {img.Height}");
+
+        for(int y = 0; y < img.Height; y += 4)
+        {
+            for(int x = 0; x < img.Width; x += 4)
+            {
+                int[] block = new int[16];
+                for(int by = 0; by < 4; by ++)
+                {
+                    for(int bx = 0; bx < 4; bx ++)
+                    {
+                        if(y + by >= img.Height || x + bx >= img.Width)
+                        {
+                            block[4 * x + y] = -1;
+                        }
+                        else
+                        {
+                            Rgba32 pixel = img[x + bx, y + by];
+                            block[4 * x + y] = pixel;
+                        }
+                    }
+                }
+            }
+        }
+        return blockedPixels;
+    }
+   
+    static List<List<List<int[]>>> blockPixels(List<List<int[]>> pixelValues)
+    {
+        List<List<List<int[]>>> blockedPixels = new List<List<List<int[]>>>();
+        
+        for(int y = 0; y < pixelValues.Count; y ++)
+        {
+            for(int x = 0; x < pixelValues[y].Count; x ++)
+            {
+                //pixel from pixelValues at y, x goes into block (int[]) blockedPixels[y / 4][x / 4]
+            }
+        }
+        
+        
+        
+        
+        return blockedPixels;
+    }
+    
     //inputted block should begin with the top left [y, x] coordinate in indeces 0, 1, followed 
     //return will house top-left [y, x] coordinate in 0-1, binary pixel data in 2-17, channel data mean in 18, channel data standard deviation in 19
     static int[] processBlockChannel16(List<int[]> blockData, int channel)
