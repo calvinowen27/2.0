@@ -31,7 +31,6 @@ namespace Huffman {
 
     public class HuffmanTree {
         List<Node> nodes = new List<Node>(); // Original nodes created from data
-        Node tree = new Node();
 
         public HuffmanTree(int[] data) {
             var freqs = new Dictionary<int, int>(); // Frequency dict for values -- Key: data value, Value: frequency of appearance
@@ -46,21 +45,29 @@ namespace Huffman {
                 nodes.Add(new Node{ n = val, frequency = freqs[val] }); // Create node for each value node from data
             }
 
-            this.tree = BuildTree();
+            Node tree = BuildTree();
 
             Console.WriteLine(tree);
 
-           foreach(var node in this.nodes) {
-                Console.WriteLine(node.code);
-           }
+            var codes = GetCodes();
+            var codeVals = ReverseCodes(codes);
+            var encoded = Encode(data, codes);
+            var decoded = Decode(encoded, codeVals);
+            Console.WriteLine(encoded+"\n");
+            foreach(var val in decoded) {
+                Console.Write(val+", ");
+            }
         }
 
         private Node BuildTree() {
             /*  Creates tree based on value frequency
                 using Nodes and assigning children
-                Returns: Node, children create tree
+                Returns: Top node of tree
             */
             var newNodes = this.nodes; // copy this.nodes in case we need to access original nodes
+            if(newNodes.Count == 1) {
+                newNodes[0].UpdateCode("0");
+            }
             while(newNodes.Count > 1) { // loop until one node remains (to return)
                 newNodes = newNodes.OrderBy(node => node.frequency).ToList(); // Sorts nodes based on frequency
                 Node node1 = newNodes[0]; // pop 0
@@ -74,18 +81,38 @@ namespace Huffman {
             return newNodes[0];
         }
 
-        public string Encode(int[] data) {
-            return "";
+        private Dictionary<int, string> GetCodes() {
+            var result = new Dictionary<int, string>();
+            foreach(var node in this.nodes) {
+                result[node.n] = node.code;
+            }
+            return result;
         }
 
-        public int[] Decode(string input) {
+        private Dictionary<string, int> ReverseCodes(Dictionary<int, string> codes) {
+            var result = new Dictionary<string, int>();
+            foreach(var key in codes.Keys) {
+                result[codes[key]] = key;
+            }
+            return result;
+        }
+
+        private string Encode(int[] data, Dictionary<int, string> codes) {
+            var result = "";
+            foreach(var val in data) {
+                result += codes[val];
+            }
+            return result;
+        }
+
+        public int[] Decode(string encoded, Dictionary<string, int> codeVals) {
             var result = new List<int>();
-            var tree = this.tree;
-            for(int i = 0; i < input.Length; i++) {
-                tree = tree.children[(int)input[i]];
-                if(tree.n != -1) {
-                    result.Add(tree.n);
-                    tree = this.tree;
+            var code = "";
+            for(int i = 0; i < encoded.Length; i++) {
+                code += encoded[i];
+                if(codeVals.Keys.Contains(code)) {
+                    result.Add(codeVals[code]);
+                    code = "";
                 }
             }
             return result.ToArray();
