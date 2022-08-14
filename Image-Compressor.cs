@@ -19,7 +19,10 @@ class ImageCompressor
         {
             for(int x = 0; x < blockedPixels[y].Count; x ++)
             {
-                Console.WriteLine($"Block [{y}, {x}]: " + String.Join(" ", blockedPixels[y][x]));
+                for(int i = 0; i < blockedPixels[y][x].Count; i ++)
+                {
+                    Console.WriteLine($"In block {x}, {y}: {String.Join(", ",blockedPixels[y][x][i])}");
+                }
             }
         }
         /*
@@ -94,35 +97,37 @@ class ImageCompressor
     
     //need to implement either 1: another for and another dimension in blockedPixels loop to do channels in this method
     //or 2: have separate blockPixels 3d Lists in main for each channel
-    static List<List<int[]>> blockPixels(Image<Rgba32> img, int channel)
+    static List<List<List<int[]>>> blockPixels(Image<Rgba32> img)
     {
-        List<List<int[]>> blockedPixels = new List<List<int[]>>();
-
-        Console.WriteLine($"{img.Width}, {img.Height}");
+        List<List<List<int[]>>> pixelBlocks = new List<List<List<int[]>>>();
 
         for(int y = 0; y < img.Height; y += 4)
         {
-            for(int x = 0; x < img.Width; x += 4)
-            {
-                int[] block = new int[16];
+            List<List<int[]>> pixelBlockRow = new List<List<int[]>>();
+            for(int x = 0; x < img.Width; x += 4)       //x,y is the index of the top left of the block in the image
+            {                                           //bx, by is the index of each pixel within the block
+                List<int[]> pixelBlock = new List<int[]>();
                 for(int by = 0; by < 4; by ++)
                 {
                     for(int bx = 0; bx < 4; bx ++)
                     {
-                        if(y + by >= img.Height || x + bx >= img.Width)
+                        if(y + by > img.Height || x + bx > img.Width)
                         {
-                            block[4 * x + y] = -1;
+                            pixelBlock.Add(new int[] {-1, -1, -1, -1});
                         }
                         else
                         {
-                            Rgba32 pixel = img[x + bx, y + by];
-                            block[4 * x + y] = pixel;
+                            Rgba32 pixel = img[x, y];
+                            int[] pixelRGBA = new int[] {pixel.R, pixel.G, pixel.B, pixel.A};
+                            pixelBlock.Add(pixelRGBA);
                         }
                     }
                 }
+                pixelBlockRow.Add(pixelBlock);
             }
+            pixelBlocks.Add(pixelBlockRow);
         }
-        return blockedPixels;
+        return pixelBlocks;
     }
    
     static List<List<List<int[]>>> blockPixels(List<List<int[]>> pixelValues)
