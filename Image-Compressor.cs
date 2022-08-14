@@ -1,7 +1,6 @@
 ﻿using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Huffman;
 
 class ImageCompressor
 {
@@ -25,88 +24,88 @@ class ImageCompressor
             for(int x = 0; x < img.Width; x ++) 
             {
                 Rgba32 pixel = img[y, x];
-
                 //Creates an int[] that stores seperate RGBA of the pixel, which is then added to the 1d pixelRow List
                 int[] yxRGBA = new int[] {pixel.R, pixel.G, pixel.B, pixel.A};
                 pixelRow.Add(yxRGBA);
             }
 
+            //Adding "null values" at the end of the row if needed to make the row length an even division of 4---------
+            while(pixelRow.Count % 4 != 0)
+            {
+                Console.WriteLine("Added null value to row " + y);
+                pixelRow.Add(new int[] {-1, -1, -1, -1});
+            }
+            //-----------------------------------------------------------------------------------------------------------
+
             //Adds the entire row of int[]s to the 2d pixelValues as mentioned before in line 20
             pixelValues.Add(pixelRow);
         }
 
-        //4d list where the initial dimension has indeces 0-3 to seperate into RGBA channels
-        //Within each channel is a 2d array of int[]s, where the int[] holds refernce values in indeces 16-19 and relative pixel values in 0-15
-        List<List<List<int[]>>> pixelsBlocked = new List<List<List<int[]>>>();
-        
-        //might not need the other loop with this one
-        for(int y = 0; y < pixelValues.Count - 8; y += 4)
+        //Adding rows full of "null values" until the image size is a perfect multiple of 4s in both dirs ------
+        if(pixelValues.Count % 4 != 0)
         {
-            for(int x = 0; x < pixelValues[y].Count - 8; x += 4)
+            List<int[]> nullRow = new List<int[]>();
+            for(int i = 0; i < pixelValues[0].Count; i ++)
             {
-                int[] blockValues = new int[20];
-                for(int i = y; i < y + 4; i ++)
-                {
-                    for(int j = x; j < x + 4; j ++)
-                    {
-                        for(int channel = 0; channel < 4; channel ++)
-                        {
-                            //Inputs the next value in the current block into the blockValues int[]
-                            blockValues.SetValue(pixelValues[i][j][channel], ((i - y) * 4) + j);    //something is messed up and my head hurts
-                        }
-                    }
-                }
-                int blockMax = 0;
-                int blockMin = 255;
-                for(int k = 0; k < 16; k ++)
-                {
-                    if(blockValues[k] > blockMax)
-                        blockMax = blockValues[k];
-                    if(blockValues[k] < blockMin)
-                        blockMin = blockValues[k];
-                }
-                int blockMidLow = (((blockMax + blockMin) / 2) + blockMin) / 2;
-                int blockMidHigh = (((blockMax + blockMin) / 2) + blockMax) / 2;
-                blockValues[16] = blockMin;
-                blockValues[17] = blockMidLow;
-                blockValues[18] = blockMidHigh;
-                blockValues[19] = blockMax;
-                Console.WriteLine(String.Join(", ", blockValues));
+                nullRow.Add(new int[] {-1, -1, -1, -1});
+            }
+            while(pixelValues.Count % 4 != 0)
+            {
+                Console.WriteLine("Added null row");
+                pixelValues.Add(nullRow);
             }
         }
-        //this block just to print and check its doing work right ---------------------------------------------------------------
+        //-------------------------------------------------------------------------------------------------------
 
-        /*
+        //this block just to print and check its doing work right ---------------------------------------------------------------
         Console.WriteLine("[12, 45]: " + 
         pixelValues[12][45][0] + " " + pixelValues[12][45][1] + " " + pixelValues[12][45][2] + " " + pixelValues[12][45][3]);
-
-        Console.WriteLine("[45, 412]: " + 
+        Console.WriteLine("[45, 12]: " + 
         pixelValues[45][12][0] + " " + pixelValues[45][12][1] + " " + pixelValues[45][12][2] + " " + pixelValues[45][12][3]);
-
-        for(int y = 0; y < img.Height; y ++) 
+        for(int y = 0; y < pixelValues.Count; y ++) 
         {
-            for(int x = 0; x < img.Width; x ++) 
+            for(int x = 0; x < pixelValues[y].Count; x ++) 
             {
                 Console.WriteLine("[" + y + ", " + x + "]: " + 
                 pixelValues[y][x][0] + " " + pixelValues[y][x][1] + " " + pixelValues[y][x][2] + " " + pixelValues[y][x][3]);
             }
         }
-        */
-
-        //----------------------------------------------------------------------------------------------------------------------
-
-        
+        //-----------------------------------------------------------------------------------------------------------------------
     }
 
-    public static void HuffmanTest() {
-        // This function just used for huffman testing/example
-
-        Random rand = new Random();
-        var data = new int[16];
-        for(int i = 0; i < 16; i++) {
-            data[i] = rand.Next(0, 4);
+    //inputted block should begin with the top left [y, x] coordinate in indeces 0, 1, followed 
+    //return will house top-left [y, x] coordinate in 0-1, binary pixel data in 2-17, channel data mean in 18, channel data standard deviation in 19
+    static int[] processBlockChannel16(List<int[]> blockData, int channel)
+    {        
+        //Math ---------------------------------------------------------------------------------------------
+        //Finding mean
+        int totalPixelValue = 0;
+        for(int i = 2; i < blockData[channel].Length; i ++)
+        {
+            totalPixelValue += blockData[channel][i];
         }
-
-        var a = new HuffmanTree(data);
+        double blockMean = totalPixelValue / (blockData[channel].Length - 2);
+        //Finding standard dev ------------------------------------------------------
+        double standardDevTotal = 0;
+        for(int i = 2; i < blockData[channel].Length; i ++)
+        {
+            standardDevTotal += (blockData[channel][i] - blockMean) * (blockData[channel][i] - blockMean);
+        }
+        double standardDev = Math.Sqrt(standardDevTotal / (blockData[channel].Length - 2));
+        //--------------------------------------------------------------------------------------------------
+        
+        int[] compressedBlock = new int[20];
+        compressedBlock[0] = blockData[channel][0];
+        compressedBlock[1] = blockData[channel][1];
+        for(int i = 2; i < blockData[channel].Length; i ++)
+        {
+            if(blockData[channel][i] < blockMean)
+                compressedBlock[i] = 0;
+            else
+                compressedBlock[i] = 1;
+        }
+        compressedBlock[18] = Convert.ToInt32(Math.Round(blockMean));
+        compressedBlock[19] = Convert.ToInt32(Math.Round(standardDev));
+        return compressedBlock;
     }
 }
