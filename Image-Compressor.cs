@@ -5,7 +5,7 @@ using Huffman;
 
 class ImageCompressor
 {
-    const string imagePath = @"../Image-Compressor/test12.png";
+    const string imagePath = @"../Image-Compressor/test10.png";
 
     static void Main(string[] args)
     {
@@ -14,7 +14,8 @@ class ImageCompressor
         List<List<List<int?[]>>> blockedPixels = blockPixels(img);
 
         //Code used to test the functionality of blockPixels()
-        /*
+        
+        Console.WriteLine("Uncompressed Blocks: ");
         for(int y = 0; y < blockedPixels.Count; y ++)
         {
             for(int x = 0; x < blockedPixels[y].Count; x ++)
@@ -25,12 +26,12 @@ class ImageCompressor
                 }
             }
         }
-        */
-
+        
+        
         List<List<List<int?[]>>> compressedBlocks = compressBlocks(blockedPixels);
 
-
-        Console.WriteLine(compressedBlocks.Count);
+        
+        Console.WriteLine("Compressed Blocks:");
         for(int y = 0; y < compressedBlocks.Count; y ++)
         {
             for(int x = 0; x < compressedBlocks[y].Count; x ++)
@@ -41,6 +42,7 @@ class ImageCompressor
                 }
             }
         }
+        
 
         /*int[] data = new int[500];
         Random rand = new Random();
@@ -56,7 +58,7 @@ class ImageCompressor
     Uses and returns a 3d list, where each entry is an int[] that contains the different RGBA channel values
     List<List<List<int[]>>> - A list of rows of blocks of int[]
          List<List<int[]>> - A row of blocks of int[]
-              List<int[]> - A "block" of 16 int[] arrays
+              List<int[]> - A set of 4 int[]s where each index is a different R, G, B, and A values
                    int[] - A set of 4 integers with R, G, B, and A values for a pixel
     */
     static List<List<List<int?[]>>> blockPixels(Image<Rgba32> img)
@@ -88,7 +90,7 @@ class ImageCompressor
                         }
                         else
                         {
-                            Rgba32 pixel = img[x, y];
+                            Rgba32 pixel = img[x + bx, y + by];
                             int?[] pixelRGBA = new int?[] {pixel.R, pixel.G, pixel.B, pixel.A};
                             pixelBlock.Add(pixelRGBA);
                         }
@@ -132,35 +134,81 @@ class ImageCompressor
         return compressedBlocks;
     }
     
+    //blockData is passed as a List<int?[]>, where each int?[] is a 
     static int?[] processBlockChannel(List<int?[]> blockData, int channel)
     {        
+        //Console.WriteLine(String.Join(", ", blockData[0]));
+        //Console.WriteLine(channel);
+        /*
+        for(int i = 0; i < blockData.Count(); i ++)
+        {
+            Console.WriteLine(String.Join(", ", blockData[i]));
+        }
+        */
+        //Loop to count the null values so that they arent calculated in the mean or standard dev
+        //Also sums the pixel values to be calculated in the mean and standard dev
+        int? nullCount = 0;
+        int? totalPixelValue = 0;
+        for(int i = 0; i < 16; i ++)
+        {
+            if(blockData[i][channel] == null)
+            {
+                nullCount ++;
+            }
+            else
+            {
+                totalPixelValue += blockData[i][channel];
+            }
+        }
         //Math ---------------------------------------------------------------------------------------------
         //Finding mean
-        int? totalPixelValue = 0;
-        for(int i = 0; i < blockData[channel].Length; i ++)
-        {
-            totalPixelValue += blockData[channel][i];
-        }
-        double blockMean = Convert.ToDouble(totalPixelValue / (blockData[channel].Length));
+        double blockMean = Convert.ToDouble(totalPixelValue / (16 - nullCount));
+        //Console.WriteLine("Mean " + blockMean);
         //Finding standard dev ------------------------------------------------------
         double standardDevTotal = 0;
-        for(int i = 0; i < blockData[channel].Length; i ++)
+        for(int i = 0; i < 16; i ++)
         {
-            standardDevTotal += Convert.ToDouble((blockData[channel][i] - blockMean) * (blockData[channel][i] - blockMean));
+            if(!(blockData[i][channel] == null))
+            {
+                /*
+                Console.WriteLine("index " + i);
+                Console.WriteLine("channel val: " + blockData[i][channel]);
+                Console.WriteLine("mean: " + blockMean);
+                Console.WriteLine("channel val - mean: " + (blockData[i][channel] - blockMean));
+                */
+                standardDevTotal += Convert.ToDouble(((blockData[i][channel]) - blockMean) * ((blockData[i][channel]) - blockMean));
+                /*
+                Console.WriteLine("standard dev loop working");
+                Console.WriteLine(standardDevTotal);
+                */
+            }
         }
-        double standardDev = Math.Sqrt(standardDevTotal / (blockData[channel].Length));
+        double standardDev = Math.Sqrt(Convert.ToDouble(standardDevTotal / (16 - nullCount)));
+        //Console.WriteLine("Standard Devs " + standardDevTotal + ", " + standardDev);
         //--------------------------------------------------------------------------------------------------
-        
         int?[] compressedBlock = new int?[18];
-        for(int i = 0; i < blockData[channel].Length; i ++)
+        for(int i = 0; i < 16; i ++)
         {
-            if(blockData[channel][i] < blockMean)
-                compressedBlock[i] = 0;
+            if(blockData[i][channel] == null)
+            {
+                compressedBlock[i] = null;
+            }
             else
-                compressedBlock[i] = 1;
+            {
+                if(blockData[i][channel] < blockMean)
+                {
+                    compressedBlock[i] = 0;
+                }
+                else
+                {
+                    compressedBlock[i] = 1;
+                }
+            }
         }
         compressedBlock[16] = Convert.ToInt16(Math.Round(blockMean));
         compressedBlock[17] = Convert.ToInt16(Math.Round(standardDev));
+        //Console.WriteLine(String.Join(", ", compressedBlock));
         return compressedBlock;
+    
     }
 }
